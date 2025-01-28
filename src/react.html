@@ -183,6 +183,10 @@
       .button-container > button {
         flex: 1 1 0;
       }
+
+      .clickable {
+        cursor: pointer;
+      }
     </style>
     <script>
       window.datiDalFoglio = {spese: [
@@ -233,22 +237,84 @@
         );
       }
 
-      function Header({columns}) {
+      function Header({columns, sortings, onSort}) {
+        const [_columns, _setColumns] = React.useState([...columns]);
+
+        const getLabel = (column) => {
+          const sorting = sortings.find(s => s.id === column.sort);
+          return `${column.label}${sorting ? (' ' + sorting.symbol) : ''}`;
+        };
+        
         return (
           <tr>
-            {columns.map((e, i) => <th key={i}>{e.label}</th>)}
+            {_columns.map((c, i) =>
+              <th
+                className={`${c.sort !== undefined ? 'clickable' : ''}`}
+                onClick={() => {
+                  if (c.sort !== undefined) {
+                    let newCols = [..._columns];
+                    newCols.filter(col => col.sort !== undefined && col !== c).forEach(e => e.sort = 'none');
+                    const filteredSortings = sortings.filter(e => e.usable);
+                    newCols[i] = {...c, sort: filteredSortings[(filteredSortings.findIndex(e => e.id === c.sort) + 1) % filteredSortings.length].id};
+                    _setColumns(newCols);
+                    onSort(newCols[i]);
+                  }
+                }}
+                key={i}>
+                {getLabel(c)}
+              </th>
+            )}
           </tr>
         );
       }
 
-      function Table({rows, columns, onRowClickCallback}) {
+      function Table({rows, columns, sortings, onRowClickCallback}) {
+        const [_rows, _setRows] = React.useState([...rows]);
+
+        const onSort = (column) => {
+          const newRows = [..._rows];
+          newRows.sort((a, b) => {
+            let first;
+            let second;
+
+            if(column.sort === 'asc') {
+              first = a[column.property];
+              second = b[column.property];
+            } else if(column.sort === 'desc') {
+              first = b[column.property];
+              second = a[column.property];
+            }
+
+            // Se a o b sono undefined, mettili alla fine
+            if (first === undefined || first === '') return 1;
+            if (second === undefined || second === '') return -1;
+            
+            // Altrimenti confronta le date
+            if(first < second) {
+              return -1;
+            } else if(first > second) {
+              return 1;
+            } else {
+              return 0;
+            }
+          });
+          _setRows(newRows);
+        };
+
         return (
           <table>
             <thead>
-              <Header columns={columns}/>
+              <Header columns={columns} sortings={sortings} onSort={onSort} />
             </thead>
             <tbody>
-              {rows.map((e, i) => <Row key={i} index={i} rowData={e} onClickCallback={onRowClickCallback} columns={columns} />)}
+              {_rows.map((e, i) => 
+                <Row 
+                  key={[e.data, e.descrizione, e.categoria, e.importo, e.nota].join('_')}
+                  index={i}
+                  rowData={e}
+                  onClickCallback={onRowClickCallback}
+                  columns={columns} />
+              )}
             </tbody>
           </table>
         );
@@ -347,6 +413,8 @@
         {label: 'Nota', property: 'nota'},
       ];
 
+      const sortings = [{id: 'none', symbol: '⇅', usable: false},{id: 'asc', symbol: '↑', usable: true},{id: 'desc', symbol: '↓', usable: true}];
+
       function App() {
         const [dialog, setDialog] = React.useState(undefined);
         const openRowDialog = (rowData, setData) => {
@@ -355,7 +423,7 @@
         return (
           <React.Fragment>
             <DialogOverlay>{dialog}</DialogOverlay>
-            <Table rows={spese} columns={columns} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
+            <Table rows={spese} columns={columns} sortings={sortings} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
           </React.Fragment>
         );
       }
