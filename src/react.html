@@ -280,12 +280,12 @@
 
         return (
           <div className="modal-overlay" id="modal-overlay" style={{display: overlayVisible ? 'block' : 'none'}} onClick={onClickOverlay}>
-            {children}
+            {children ? React.cloneElement(children, {closeDialog}) : undefined}
           </div>
         );
       }
 
-      function RowDialog({rowData, setRowData}) {
+      function RowDialog({rowData, setRowData, closeDialog}) {
         const [data, setData] = React.useState({...rowData});
 
         const updateData = ({key, value}) => {
@@ -303,7 +303,7 @@
 
         return (
           <div className="modal" id="modal">
-            <button className="close-button" id="close-modal" onClick={()=>console.log('close dialog')}>&times;</button>
+            <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
             <form className="form-container" id="formDati">
               <div className="form-row">
                 <label htmlFor="data">Data:</label>
