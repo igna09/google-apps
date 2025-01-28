@@ -279,42 +279,47 @@
       }
 
       function RowDialog({rowData, setRowData}) {
-        let [data, setData] = React.useState(rowData);
+        const [data, setData] = React.useState({...rowData});
+
+        const updateData = ({key, value}) => {
+          setData({...data, [key]: value});
+          console.log(data)
+        }
+        
+        React.useEffect(() => {
+          console.log({rowData, data: JSON.stringify(data), same: rowData === data});
+          setData({...rowData, data: rowData.data ? rowData.data : ''});
+        }, [rowData]);
+
         return (
           <div className="modal" id="modal">
             <button className="close-button" id="close-modal">&times;</button>
             <form className="form-container" id="formDati">
               <div className="form-row">
-                  <label htmlFor="data">Data:</label>
-                  <input type="date" id="data" name="data" required defaultValue={data.data}/>
+                <label htmlFor="data">Data:</label>
+                <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
               </div>
-              
               <div className="checkbox-row">
-                  <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura}/>
-                  <label htmlFor="spesaFutura">Spesa futura</label>
+                <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.value)}/>
+                <label htmlFor="spesaFutura">Spesa futura</label>
               </div>
-              
               <div className="form-row">
-                  <label htmlFor="descrizione">Descrizione:</label>
-                  <input type="text" id="descrizione" name="descrizione" required defaultValue={data.descrizione}/>
+                <label htmlFor="descrizione">Descrizione:</label>
+                <input type="text" id="descrizione" name="descrizione" required value={rowData.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
               </div>
-              
               <div className="form-row">
-                  <label htmlFor="categoria">Categoria:</label>
-                  <input type="text" id="categoria" name="categoria" list="categorie" required defaultValue={data.categoria}/>
-                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                <label htmlFor="categoria">Categoria:</label>
+                <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
+                <datalist id="categorie"></datalist>{/*Autocomplete*/}
               </div>
-              
               <div className="form-row">
-                  <label htmlFor="importo">Importo:</label>
-                  <input type="number" id="importo" name="importo" step="0.01" required  defaultValue={data.importo}/>
+                <label htmlFor="importo">Importo:</label>
+                <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
               </div>
-              
               <div className="form-row">
-                  <label htmlFor="nota">Nota (opzionale):</label>
-                  <textarea id="nota" name="nota" rows="4" defaultValue={data.nota}></textarea>
+                <label htmlFor="nota">Nota (opzionale):</label>
+                <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
               </div>
-              
               <div className="button-container">
                 <button id="elimina" type="button">Elimina</button>
                 <button id="submitButton" type="button" disabled>Salva</button>
@@ -344,9 +349,6 @@
           </React.Fragment>
         );
       }
-
-      // const root = ReactDOM.createRoot(document.getElementById('react-test'));
-      // root.render(<App />)
 
       let spese = [];
       let categorie = [];
