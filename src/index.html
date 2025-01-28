@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simple HTML Page</title>
+<style>
+      /* Stile della scrollbar */
+      ::-webkit-scrollbar {
+          width: 8px; /* Imposta la larghezza della scrollbar */
+          height: 8px; /* Imposta l'altezza della scrollbar per gli elementi orizzontali */
+      }
+
+      /* Stile della parte della scrollbar (track) */
+      ::-webkit-scrollbar-track {
+          background: #f1f1f1; /* Colore di sfondo del track */
+          border-radius: 10px; /* Rende gli angoli arrotondati */
+      }
+
+      /* Stile del pollice della scrollbar */
+      ::-webkit-scrollbar-thumb {
+          background: #888; /* Colore del pollice */
+          border-radius: 10px; /* Angoli arrotondati per il pollice */
+          border: 2px solid #f1f1f1; /* Bordo che separa il pollice dal track */
+      }
+
+      /* Hover sul pollice */
+      ::-webkit-scrollbar-thumb:hover {
+          background: #555; /* Colore del pollice al passaggio del mouse */
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        background-color: #f9f9f9;
+      }
+      .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: white;
+        padding: 10px;
+      }
+      .form-row {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      input[type="text"],
+      input[type="date"],
+      input[type="number"],
+      textarea {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      textarea {
+        resize: none;
+      }
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+      button:hover:enabled {
+        background-color: #45a049;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      .tab-container>div:not(.modal-overlay) {
+        display: flex;
+        justify-content: center;
+      }
+      table {
+        width: 100%;
+        text-align: center;
+        border-spacing: 0;
+      }
+      .floating-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        font-size: 50px;
+      }
+
+      .floating-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .floating-button:active {
+        transform: scale(0.9);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        z-index: 1000;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 999;
+      }
+
+      .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #333;
+      }
+
+      .close-button:hover {
+          color: #007BFF;
+      }
+
+      table tr:not(:first-of-type):hover {
+        background-color: #ddd;
+        /*transform: scale(1.04);*/
+        transition: transform 0.2s ease;
+      }
+
+      table tr {
+        height: 40px;
+      }
+
+      .button-container {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button-container > button {
+        flex: 1 1 0;
+      }
+</style>
+<script>
+    window.datiDalFoglio = {spese: [
+        ["2024-12-02T23:00:00.000Z","amazon","personali",34.99,""],
+        ["2024-12-02T23:00:00.000Z","dentista mela","personali",70.25,""],
+        ["2024-12-03T23:00:00.000Z","pizza","uscite",11,""],
+        ["2024-12-04T23:00:00.000Z","pedaggio","auto",10.1,""],
+        ["2024-12-04T23:00:00.000Z","medicine prostata","paco",29,""],
+        ["2024-12-04T23:00:00.000Z","gasolio","auto",30.43,""],
+        ["2024-12-05T23:00:00.000Z","cheers","uscite",7,""],
+        ["2024-12-05T23:00:00.000Z","ipercoop regalo papa","regali",33.9,"da aggiustare"],
+        ["2024-12-05T23:00:00.000Z","ipercoop","spesa",10.82,""],
+        ["2024-12-05T23:00:00.000Z","md","spesa",13.36,""],
+        ["2024-12-07T23:00:00.000Z","pranzo lavoro","personali",8,""],
+        ["2024-12-07T23:00:00.000Z","stomek","paco",25.9,""],
+        ["2024-12-08T23:00:00.000Z","satispay","personali",25,""],
+        ["2024-12-09T23:00:00.000Z","crocchette","paco",23.19,""],
+        ["2024-12-09T23:00:00.000Z","lidl","spesa",3.57,""],
+        ["2024-12-12T23:00:00.000Z","test","test",1,""],
+        ["","debiti mela","personali",250,"da saldare"],
+        ["","TARI","casa",130.66,""]
+    ]};
+</script>
+</head>
+<body>
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+        <button class="close-button" id="close-modal">&times;</button>
+        <form class="form-container" id="formDati">
+          <div class="form-row">
+              <label for="data">Data:</label>
+              <input type="date" id="data" name="data" required>
+          </div>
+          
+          <div class="checkbox-row">
+              <input type="checkbox" id="spesaFutura" name="spesaFutura" onchange="gestisciData()">
+              <label for="spesaFutura">Spesa futura</label>
+          </div>
+          
+          <div class="form-row">
+              <label for="descrizione">Descrizione:</label>
+              <input type="text" id="descrizione" name="descrizione" required>
+          </div>
+          
+          <div class="form-row">
+              <label for="categoria">Categoria:</label>
+              <input type="text" id="categoria" name="categoria" list="categorie" required>
+              <datalist id="categorie"></datalist> <!-- Autocomplete -->
+          </div>
+          
+          <div class="form-row">
+              <label for="importo">Importo:</label>
+              <input type="number" id="importo" name="importo" step="0.01" required>
+          </div>
+          
+          <div class="form-row">
+              <label for="nota">Nota (opzionale):</label>
+              <textarea id="nota" name="nota" rows="4"></textarea>
+          </div>
+          
+          <div class="button-container">
+            <button id="elimina" type="button">Elimina</button>
+            <button id="submitButton" type="button" disabled>Salva</button>
+          </div>
+        </form>
+    </div>
+  </div>
+
+  <button class="floating-button" id="float-btn">+</button>
+
+  <script src="dialog_gs.js"></script>
+
+</body>

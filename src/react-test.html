@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      /* Stile della scrollbar */
+      ::-webkit-scrollbar {
+          width: 8px; /* Imposta la larghezza della scrollbar */
+          height: 8px; /* Imposta l'altezza della scrollbar per gli elementi orizzontali */
+      }
+
+      /* Stile della parte della scrollbar (track) */
+      ::-webkit-scrollbar-track {
+          background: #f1f1f1; /* Colore di sfondo del track */
+          border-radius: 10px; /* Rende gli angoli arrotondati */
+      }
+
+      /* Stile del pollice della scrollbar */
+      ::-webkit-scrollbar-thumb {
+          background: #888; /* Colore del pollice */
+          border-radius: 10px; /* Angoli arrotondati per il pollice */
+          border: 2px solid #f1f1f1; /* Bordo che separa il pollice dal track */
+      }
+
+      /* Hover sul pollice */
+      ::-webkit-scrollbar-thumb:hover {
+          background: #555; /* Colore del pollice al passaggio del mouse */
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        background-color: #f9f9f9;
+      }
+      .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: white;
+        padding: 10px;
+      }
+      .form-row {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      input[type="text"],
+      input[type="date"],
+      input[type="number"],
+      textarea {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      textarea {
+        resize: none;
+      }
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+      button:hover:enabled {
+        background-color: #45a049;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      .tab-container>div:not(.modal-overlay) {
+        display: flex;
+        justify-content: center;
+      }
+      table {
+        width: 100%;
+        text-align: center;
+        border-spacing: 0;
+      }
+      .floating-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        font-size: 50px;
+      }
+
+      .floating-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .floating-button:active {
+        transform: scale(0.9);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        z-index: 1000;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 999;
+      }
+
+      .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #333;
+      }
+
+      .close-button:hover {
+          color: #007BFF;
+      }
+
+      /*table tr:not(:first-of-type):hover {*/
+      table tbody tr:hover {
+        background-color: #ddd;
+        /*transform: scale(1.04);*/
+        transition: transform 0.2s ease;
+      }
+
+      table tr {
+        height: 40px;
+      }
+
+      .button-container {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button-container > button {
+        flex: 1 1 0;
+      }
+    </style>
+    <script>
+      window.datiDalFoglio = {spese: [
+        ["2024-12-02T23:00:00.000Z","amazon","personali",34.99,""],
+        ["2024-12-02T23:00:00.000Z","dentista mela","personali",70.25,""],
+        ["2024-12-03T23:00:00.000Z","pizza","uscite",11,""],
+        ["2024-12-04T23:00:00.000Z","pedaggio","auto",10.1,""],
+        ["2024-12-04T23:00:00.000Z","medicine prostata","paco",29,""],
+        ["2024-12-04T23:00:00.000Z","gasolio","auto",30.43,""],
+        ["2024-12-05T23:00:00.000Z","cheers","uscite",7,""],
+        ["2024-12-05T23:00:00.000Z","ipercoop regalo papa","regali",33.9,"da aggiustare"],
+        ["2024-12-05T23:00:00.000Z","ipercoop","spesa",10.82,""],
+        ["2024-12-05T23:00:00.000Z","md","spesa",13.36,""],
+        ["2024-12-07T23:00:00.000Z","pranzo lavoro","personali",8,""],
+        ["2024-12-07T23:00:00.000Z","stomek","paco",25.9,""],
+        ["2024-12-08T23:00:00.000Z","satispay","personali",25,""],
+        ["2024-12-09T23:00:00.000Z","crocchette","paco",23.19,""],
+        ["2024-12-09T23:00:00.000Z","lidl","spesa",3.57,""],
+        ["2024-12-12T23:00:00.000Z","test","test",1,""],
+        ["","debiti mela","personali",250,"da saldare"],
+        ["","TARI","casa",130.66,""]
+      ]};
+    </script>
+    <!-- UPGRADE REACT TO 19, ATM react-dom IS NOT PRESENT -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+  </head>
+  <div id="react-test" style="width: 100%;"></div>
+  <body id="root">
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <button class="floating-button" id="float-btn">+</button>
+
+    <script type="text/babel">
+      Date.prototype.getTwoDigitValueString = (value) => value > 9 ? value.toString() : '0' + value;
+      Date.prototype.toDateInputValue = (function() {
+          var local = new Date(this);
+          return local.getFullYear() + '-' + this.getTwoDigitValueString(local.getMonth() + 1) + '-' + this.getTwoDigitValueString(local.getDate());
+      });
+
+      function Row({rowData, index, onClickCallback, columns}) {
+        let [data, setData] = React.useState(rowData);
+        return (
+          <tr onClick={() => onClickCallback({data, index, setData})}>
+            {columns.map((e, i) => <td key={i}>{data[e.property]}{e.type === 'currency' ? '€' : ''}</td>)}
+          </tr>
+        );
+      }
+
+      function Header({columns}) {
+        return (
+          <tr>
+            {columns.map((e, i) => <th key={i}>{e.label}</th>)}
+          </tr>
+        );
+      }
+
+      function Table({rows, columns, onRowClickCallback}) {
+        return (
+          <table>
+            <thead>
+              <Header columns={columns}/>
+            </thead>
+            <tbody>
+              {rows.map((e, i) => <Row key={i} index={i} rowData={e} onClickCallback={onRowClickCallback} columns={columns} />)}
+            </tbody>
+          </table>
+        );
+      }
+
+      function DialogOverlay({children}) {
+        const [overlayVisible, setOverlayVisible] = React.useState(false);
+
+        const closeDialog = () => {
+          setOverlayVisible(false);
+        }
+
+        const openDialog = () => {
+          setOverlayVisible(true);
+        }
+
+        React.useEffect(() => {
+          if (children) {
+            openDialog();
+          }
+        }, [children]);
+
+        return (
+          <div className="modal-overlay" id="modal-overlay" style={{display: overlayVisible ? 'block' : 'none'}} onClick={() => closeDialog(false)}>
+            {children}
+          </div>
+        );
+      }
+
+      function RowDialog({rowData, setRowData}) {
+        let [data, setData] = React.useState(rowData);
+        return (
+          <div className="modal" id="modal">
+            <button className="close-button" id="close-modal">&times;</button>
+            <form className="form-container" id="formDati">
+              <div className="form-row">
+                  <label htmlFor="data">Data:</label>
+                  <input type="date" id="data" name="data" required defaultValue={data.data}/>
+              </div>
+              
+              <div className="checkbox-row">
+                  <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura}/>
+                  <label htmlFor="spesaFutura">Spesa futura</label>
+              </div>
+              
+              <div className="form-row">
+                  <label htmlFor="descrizione">Descrizione:</label>
+                  <input type="text" id="descrizione" name="descrizione" required defaultValue={data.descrizione}/>
+              </div>
+              
+              <div className="form-row">
+                  <label htmlFor="categoria">Categoria:</label>
+                  <input type="text" id="categoria" name="categoria" list="categorie" required defaultValue={data.categoria}/>
+                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
+              </div>
+              
+              <div className="form-row">
+                  <label htmlFor="importo">Importo:</label>
+                  <input type="number" id="importo" name="importo" step="0.01" required  defaultValue={data.importo}/>
+              </div>
+              
+              <div className="form-row">
+                  <label htmlFor="nota">Nota (opzionale):</label>
+                  <textarea id="nota" name="nota" rows="4" defaultValue={data.nota}></textarea>
+              </div>
+              
+              <div className="button-container">
+                <button id="elimina" type="button">Elimina</button>
+                <button id="submitButton" type="button" disabled>Salva</button>
+              </div>
+            </form>
+          </div>
+        );
+      }
+
+      const columns = [
+        {label: 'Data', sort: 'asc', property: 'data'}, 
+        {label: 'Descrizione', property: 'descrizione'}, 
+        {label: 'Categoria', sort: 'none', property: 'categoria'}, 
+        {label: 'Importo', sort: 'none', property: 'importo', type: 'currency'}, 
+        {label: 'Nota', property: 'nota'},
+      ];
+
+      function App() {
+        const [dialog, setDialog] = React.useState(undefined);
+        const openRowDialog = (rowData, setData) => {
+          setDialog(<RowDialog rowData={rowData} setRowData={setData} />);
+        }
+        return (
+          <React.Fragment>
+            <DialogOverlay>{dialog}</DialogOverlay>
+            <Table rows={spese} columns={columns} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
+          </React.Fragment>
+        );
+      }
+
+      // const root = ReactDOM.createRoot(document.getElementById('react-test'));
+      // root.render(<App />)
+
+      let spese = [];
+      let categorie = [];
+
+      // Mostra i dati dal foglio di calcolo nel form
+      window.onload = function() {
+        if (window.datiDalFoglio) {
+          spese = window.datiDalFoglio.spese.map((e, i) => ({
+            data: e[0] ? (new Date(e[0])).toDateInputValue() : undefined, 
+            descrizione: e[1], 
+            categoria: e[2], 
+            importo: e[3], 
+            nota: e[4]
+          }));
+
+          const root = ReactDOM.createRoot(document.getElementById('react-test'));
+          root.render(<App />)
+        }
+      };
+
+      const categorieDatalist = document.getElementById('categorie');
+
+      function updateCategorie(spese) {
+        const categorieUniche = [...new Set(spese.map(e=>e.categoria))].filter(c => c !== "");  // Rimuove valori vuoti
+        // Aggiungi le categorie uniche all'elemento datalist
+        rimuoviContenutoComponente(categorieDatalist);
+        categorieUniche.forEach(categoria => {
+          const option = document.createElement('option');
+          option.value = categoria;
+          categorieDatalist.appendChild(option);
+        });
+      }
+
+      const buttonContainer = document.getElementsByClassName('button-container')[0];
+      /*const salvaButton = buttonContainer.querySelector('#submitButton');
+      const eliminaButton = buttonContainer.querySelector('#elimina');
+
+      eliminaButton.onclick = () => {
+        table.apis.removeRow(aggiornaDatiRow.data.index);
+        updateCategorie(table.apis.getData());
+        closeDialog();
+        aggiornaDatiRow = undefined;
+        saveOnGoogle();
+      }
+
+      salvaButton.onclick = aggiungiSpesa;
+
+      let aggiornaDatiRow = undefined;
+      const openDialog = (rowData, setData) => {
+        if(rowData) {
+          aggiornaDatiRow = rowData;
+          if(rowData.data) {
+            document.getElementById('data').value = rowData.data;
+            document.getElementById('spesaFutura').checked = false;
+          } else {
+            document.getElementById('spesaFutura').checked = true;
+          }
+          document.getElementById('descrizione').value = rowData.descrizione;
+          document.getElementById('categoria').value = rowData.categoria;
+          document.getElementById('importo').value = rowData.importo;
+          document.getElementById('nota').value = rowData.nota;
+
+          eliminaButton.style.display = 'block';
+          salvaButton.onclick = () => {
+            aggiungiSpesa();
+            setData({...aggiornaDatiRow});
+            aggiornaDatiRow = undefined;
+          }
+        } else {
+          eliminaButton.style.display = 'none';
+          salvaButton.onclick = () => {
+            aggiungiSpesa();
+            aggiornaDatiRow = undefined;
+          }
+        }
+        modalOverlay.style.display = 'block';
+      }*/
+
+      const closeDialog = () => {
+        modalOverlay.style.display = 'none';
+        form.reset();
+      }
+
+      const floatBtn = document.getElementById('float-btn');
+      //const modal = document.getElementById('modal');
+      const modalOverlay = document.getElementById('modal-overlay');
+      //const closeModal = document.getElementById('close-modal');
+
+      floatBtn.addEventListener('click', function() {
+          console.log('click floatBtn')
+          openDialog();
+      });
+
+      /*closeModal.addEventListener('click', function() {
+        closeDialog();
+      });*/
+
+      modalOverlay.addEventListener('click', function() {
+        if (!modal.contains(event.target)) {
+          closeDialog();
+        }
+      });
+
+      /*const form = document.getElementById('formDati');
+      const submitButton = document.getElementById('submitButton');
+      const campoData = document.getElementById('data');
+
+      // Abilita/disabilita il pulsante in base alla validità del form
+      form.addEventListener('input', () => {
+        submitButton.disabled = !form.checkValidity();
+      });
+
+      function gestisciData() {
+        const spesaFutura = document.getElementById('spesaFutura').checked;
+        
+        if (spesaFutura) {
+          // Disabilita il campo data e rimuove l'obbligatorietà
+          campoData.disabled = true;
+          campoData.removeAttribute('required');
+          
+          // Resetta il valore del campo data
+          campoData.value = '';
+        } else {
+          // Abilita il campo data e lo rende obbligatorio
+          campoData.disabled = false;
+          campoData.setAttribute('required', 'true');
+        }
+
+        // Controlla di nuovo la validità del form
+        form.dispatchEvent(new Event('input'));
+      }*/
+
+      function aggiungiSpesa() {
+        if(aggiornaDatiRow !== undefined) {
+          aggiornaDatiRow.data= !document.getElementById('spesaFutura').checked ? new Date(document.getElementById('data').value).toDateInputValue() : undefined,
+          aggiornaDatiRow.descrizione = document.getElementById('descrizione').value,
+          aggiornaDatiRow.categoria = document.getElementById('categoria').value,
+          aggiornaDatiRow.importo = parseFloat(document.getElementById('importo').value),
+          aggiornaDatiRow.nota = document.getElementById('nota').value || '' // Nota opzionale, usa stringa vuota se assente
+
+          //aggiornaDatiRow = undefined;
+        } else {
+          const dati = {
+            data: !document.getElementById('spesaFutura').checked ? new Date(document.getElementById('data').value).toDateInputValue() : undefined,
+            // spesaFutura: document.getElementById('spesaFutura').checked,
+            descrizione: document.getElementById('descrizione').value,
+            categoria: document.getElementById('categoria').value,
+            importo: parseFloat(document.getElementById('importo').value),
+            nota: document.getElementById('nota').value || '' // Nota opzionale, usa stringa vuota se assente
+          };
+          //table.apis.addRows([dati]);
+        }
+        closeDialog();
+        //updateCategorie(table.apis.getData());
+        //saveOnGoogle();
+      }
+
+      function sortSpese(spese) {
+        const newSpese = [...spese];
+        newSpese.sort((a,b) => {
+          // Se a o b sono undefined, mettili alla fine
+          if (a.data === undefined || a.data === '') return 1;
+          if (b.data === undefined || b.data === '') return -1;
+          
+          // Altrimenti confronta le date
+          if(a.data < b.data) {
+            return -1;
+          } else if(a.data > b.data) {
+            return 1;
+          } else {
+            return 0;
+          }
+        })
+        return newSpese;
+      }
+
+      function saveOnGoogle() {
+        //console.log(sortSpese(table.apis.getData().map(e => ({...e, data: e.data ? e.data : undefined}))))
+        google.script.run.aggiornaSpese(sortSpese(table.apis.getData().map(e => ({...e, data: e.data ? e.data : undefined}))));
+      }
+    </script>
+  </body>
+</html>
