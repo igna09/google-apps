@@ -271,8 +271,15 @@
           }
         }, [children]);
 
+        const onClickOverlay = (event) => {
+          if (event.target.id === 'modal-overlay') {
+            closeDialog();
+          }
+          event.stopPropagation();
+        }
+
         return (
-          <div className="modal-overlay" id="modal-overlay" style={{display: overlayVisible ? 'block' : 'none'}} onClick={() => closeDialog(false)}>
+          <div className="modal-overlay" id="modal-overlay" style={{display: overlayVisible ? 'block' : 'none'}} onClick={onClickOverlay}>
             {children}
           </div>
         );
@@ -283,17 +290,20 @@
 
         const updateData = ({key, value}) => {
           setData({...data, [key]: value});
-          console.log(data)
         }
         
         React.useEffect(() => {
-          console.log({rowData, data: JSON.stringify(data), same: rowData === data});
+          // console.log({rowData, data: JSON.stringify(data), same: rowData === data});
           setData({...rowData, data: rowData.data ? rowData.data : ''});
         }, [rowData]);
+        
+        React.useEffect(() => {
+          console.log('data changed', data)
+        }, [data]);
 
         return (
           <div className="modal" id="modal">
-            <button className="close-button" id="close-modal">&times;</button>
+            <button className="close-button" id="close-modal" onClick={()=>console.log('close dialog')}>&times;</button>
             <form className="form-container" id="formDati">
               <div className="form-row">
                 <label htmlFor="data">Data:</label>
@@ -305,7 +315,7 @@
               </div>
               <div className="form-row">
                 <label htmlFor="descrizione">Descrizione:</label>
-                <input type="text" id="descrizione" name="descrizione" required value={rowData.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
+                <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData({key: 'descrizione', value: event.target.value})}/>
               </div>
               <div className="form-row">
                 <label htmlFor="categoria">Categoria:</label>
