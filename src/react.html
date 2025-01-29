@@ -364,7 +364,7 @@
         );
       }
 
-      function Form({children, data}) {
+      function Form({children, data, onFormChange}) {
         const parseDataToValue = (data) => {
           let dataObj = {};
           Object.entries(data || {}).forEach(([key, value]) => {
@@ -372,49 +372,79 @@
           });
           return dataObj;
         }
+        const parseValueToData = (value) => {
+          let dataObj = {};
+          Object.entries(value || {}).forEach(([key, value]) => {
+            dataObj[key] = value.value;
+          });
+          return dataObj;
+        }
+        const testValidators = ({validators, value, formValue}) => {
+          if(!validators) {
+            return true;
+          }
+          return validators.reduce((acc, cur)=>{
+              const validatorValid = cur(value, formValue);
+              return acc && validatorValid;
+            }, true);
+        }
 
         const [_children, _setChildren] = React.useState([]);
         const [_valid, _setValid] = React.useState(true);
         const [_value, _setValue] = React.useState(parseDataToValue(data));
+        const [_validators, _setValidators] = React.useState({});
 
-        const validate = (formControls) => {
-          _setValid(Object.entries(_value).reduce((acc, cur)=>acc && cur[1].valid, true));
-        }
+        React.useEffect(() => {
+          // console.log('data changed',{data})
+          _setValue(parseDataToValue(data))
+        }, [data])
 
         React.useEffect(() => {
           let allChildrens = [];
           React.Children.forEach(children, (child) => {
-            allChildrens.push(addChildrenChangeFormControl(child));
+            allChildrens.push(enrichFormControl(child));
           });
           // console.log({allChildrens})
           _setChildren(allChildrens);
         }, [children, _value]);
         
         React.useEffect(()=>{
-          validate();
           console.log('form value changed',{_value})
+          // const valid = Object.entries(_value).reduce((acc, cur)=>acc && cur[1].valid, true);
+          // _setValid(valid);
+          const valid = Object.entries(_validators).reduce((acc, [key, keyValidators]) => {
+            const keyValid = keyValidators.reduce((accV, curV)=>{
+              const validatorValid = curV(_value[key].value, parseValueToData(_value));
+              console.log('validatorValid', validatorValid, key, _value[key], parseValueToData(_value))
+              return accV && validatorValid;
+            }, true);
+            return acc && keyValid
+          }, true);
+          _setValid(valid);
+          onFormChange({valid, value: _value});
         }, [_value])
 
-        React.useEffect(() => {
-          console.log('data changed',{data})
-          _setValue(parseDataToValue(data))
-        }, [data])
+        React.useEffect(()=>{
+          console.log('validators changed',_validators)
+        }, [_validators])
 
-        const addChildrenChangeFormControl = (child) => {
+        const enrichFormControl = (child) => {
           if (child.type === FormControl) {
-            // console.log('pre',{child, key: child.key, _value})
+            if(child.props.validators) {
+              _setValidators((latestValue)=>({...latestValue, [child.key]: child.props.validators}))
+            }
             return React.cloneElement(child, {
               value: _value[child.key] !== undefined ? _value[child.key].value : undefined,
               onChangeFormControlValue: (value, valid) => {
-                // console.log('post',{child})
                 _setValue(prevValue => {
-                  const newValue = {...prevValue, [child.key]: {value, valid}};
+                  const newValue = {...prevValue, [child.key]: {value, valid: testValidators({validators: _validators[child.key], value, formValue: _value})}};
+                  // console.log('onChangeFormControlValue',newValue)
                   return newValue;
                 });
               }
             });
           } else if (child.props && child.props.children) {
-            return React.cloneElement(child, {children: React.Children.map(child.props.children, addChildrenChangeFormControl)});
+            return React.cloneElement(child, {children: React.Children.map(child.props.children, enrichFormControl)});
           } else {
             return child;
           }
@@ -455,11 +485,12 @@
         }, [children, _valid, _value]);
 
         React.useEffect(() => {
-          const valid = validators !== undefined ? validators.reduce((acc, cur) => acc && cur(_value), true) : true;
+          // const valid = validators !== undefined ? validators.reduce((acc, cur) => acc && cur(_value), true) : true;
           if(onChangeFormControlValue) {
-            onChangeFormControlValue(_value, valid);
+            onChangeFormControlValue(_value);
           }
-          _setValid(valid);
+          // _setValid(valid);
+        // }, [_value, formValue])
         }, [_value])
 
         React.useEffect(()=>_setValue(value), [value]);
@@ -482,11 +513,8 @@
         });
         const mapRowData = (rowData) => ({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
         const [data, setData] = React.useState({...(rowData ? mapRowData(rowData) : getEmptyData())});
+        const [valid, setValid] = React.useState(false);
 
-        const updateData = (key, value) => {
-          setData({...data, [key]: value});
-        }
-        
         React.useEffect(() => {
           if(!rowData) {
             rowData = getEmptyData();
@@ -494,22 +522,28 @@
           setData(mapRowData(rowData));
         }, [rowData]);
 
+        const onFormChange = ({valid, value}) => {
+          console.log('onFormChange', valid, value)
+          // setData(value);
+          setValid(valid);
+        }
+
         const Validators = {
-          mandatory: (value) => value !== undefined && value !== '',
+          mandatory: (value) => value !== undefined && value !== '' && value !== false,
         };
 
         return (
           <div className="modal" id="modal">
             <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
-            <Form data={data}>
+            <Form data={data} onFormChange={onFormChange}>
               <div className="form-row">
-                <FormControl key={'data'}>
+                <FormControl key={'data'} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.spesaFutura))]}>
                   <label htmlFor="data">Data:</label>
                   <input type="date" id="data" name="data"/>
                 </FormControl>
               </div>
               <div className="checkbox-row">
-                <FormControl key={'spesaFutura'}>
+                <FormControl key={'spesaFutura'} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.data))]}>
                   <label htmlFor="spesaFutura">Spesa futura</label>
                   <input type="checkbox" id="spesaFutura" name="spesaFutura"/>
                 </FormControl>
@@ -521,14 +555,14 @@
                 </FormControl>
               </div>
               <div className="form-row">
-                <FormControl key={'categoria'}>
+                <FormControl key={'categoria'} validators={[Validators.mandatory]}>
                   <label htmlFor="categoria">Categoria:</label>
                   <input type="text" id="categoria" name="categoria" list="categorie"/>
                   <datalist id="categorie"></datalist>{/*Autocomplete*/}
                 </FormControl>
               </div>
               <div className="form-row">
-                <FormControl key={'importo'}>
+                <FormControl key={'importo'} validators={[Validators.mandatory]}>
                   <label htmlFor="importo">Importo:</label>
                   <input type="number" id="importo" name="importo" step="0.01"/>
                 </FormControl>
@@ -541,7 +575,7 @@
               </div>
               <div className="button-container">
                 <button id="elimina" type="button">Elimina</button>
-                <button id="submitButton" type="button" onClick={()=>setRowData(data)}>Salva</button>
+                <button id="submitButton" type="button" disabled={!valid} onClick={()=>setRowData(data)}>Salva</button>
               </div>
             </Form>
           </div>
