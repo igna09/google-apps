@@ -275,12 +275,12 @@
         const [_rows, _setRows] = React.useState([...rows]);
 
         React.useEffect(() => {
-          _setRows([...rows]);
           onSort(columns.find(e => e.sort !== undefined && e.sort !== 'none'), rows);
         }, [rows]);
 
         const onSort = (column, rows) => {
-          const newRows = [...rows];
+          let newRows = [...rows];
+          newRows = newRows.map(e => ({...e, data: e.data ? new Date(e.data) : undefined}));
           newRows.sort((a, b) => {
             let first;
             let second;
@@ -306,6 +306,7 @@
               return 0;
             }
           });
+          newRows = newRows.map(e => ({...e, data: e.data ? e.data.toDateInputValue() : undefined}));
           _setRows(newRows);
         };
 
