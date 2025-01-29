@@ -365,9 +365,17 @@
       }
 
       function Form({children, data}) {
+        const parseDataToValue = (data) => {
+          let dataObj = {};
+          Object.entries(data || {}).forEach(([key, value]) => {
+            dataObj[key] = {value, valid: true};
+          });
+          return dataObj;
+        }
+
         const [_children, _setChildren] = React.useState([]);
         const [_valid, _setValid] = React.useState(true);
-        const [_value, _setValue] = React.useState({});
+        const [_value, _setValue] = React.useState(parseDataToValue(data));
 
         const validate = (formControls) => {
           _setValid(Object.entries(_value).reduce((acc, cur)=>acc && cur[1].valid, true));
@@ -380,20 +388,16 @@
           });
           // console.log({allChildrens})
           _setChildren(allChildrens);
-        }, [children]);
+        }, [children, _value]);
         
         React.useEffect(()=>{
           validate();
-          // console.log('form value changed',{_value})
+          console.log('form value changed',{_value})
         }, [_value])
 
         React.useEffect(() => {
-          // console.log({data})
-          let dataObj = {};
-          Object.entries(data || {}).forEach(([key, value]) => {
-            dataObj[key] = {value, valid: true};
-          });
-          _setValue(dataObj)
+          console.log('data changed',{data})
+          _setValue(parseDataToValue(data))
         }, [data])
 
         const addChildrenChangeFormControl = (child) => {
@@ -424,10 +428,9 @@
       }
 
       function FormControl({children, validators, onChangeFormControlValue, value}) {
-        // console.log({children, validators, onChangeFormControlValue, myvalue})
         const [_children, _setChildren] = React.useState([]);
         const [_valid, _setValid] = React.useState(true);
-        const [_value, _setValue] = React.useState(undefined);
+        const [_value, _setValue] = React.useState(value);
 
         React.useEffect(() => {
           const updatedChildren = React.Children.map(children, (child) => {
@@ -435,12 +438,13 @@
             if (['input', 'textarea'].includes(child.type)) {
               return React.cloneElement(child, {
                 style: {borderColor: _valid ? 'unset' : 'red'},
-                value: _value,
+                value: !(child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
+                checked: (child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
                 onChange: (event) => {
                   if (child.props && child.props.onChange) { //original onChange
                     child.props.onChange(event);
                   }
-                  _setValue(event.target.value);
+                  _setValue((child.type === 'input' && child.props.type === 'checkbox') ? event.target.checked : event.target.value);
                 }
               });
             }
@@ -476,8 +480,8 @@
           importo: '',
           nota: ''
         });
-
-        const [data, setData] = React.useState({...(rowData ? rowData : getEmptyData())});
+        const mapRowData = (rowData) => ({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
+        const [data, setData] = React.useState({...(rowData ? mapRowData(rowData) : getEmptyData())});
 
         const updateData = (key, value) => {
           setData({...data, [key]: value});
@@ -487,7 +491,7 @@
           if(!rowData) {
             rowData = getEmptyData();
           }
-          setData({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
+          setData(mapRowData(rowData));
         }, [rowData]);
 
         const Validators = {
@@ -497,52 +501,49 @@
         return (
           <div className="modal" id="modal">
             <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
-            {/*<ReactHookForm.FormProvider {...methods}>*/}
-              {/*console.log(ReactHookForm.useFormContext())*/}
-              <Form data={rowData}>
-                <div className="form-row">
+            <Form data={data}>
+              <div className="form-row">
+                <FormControl key={'data'}>
                   <label htmlFor="data">Data:</label>
-                  <FormControl key={'data'}>
-                    <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
-                  </FormControl>
-                </div>
-                <div className="checkbox-row">
+                  <input type="date" id="data" name="data"/>
+                </FormControl>
+              </div>
+              <div className="checkbox-row">
+                <FormControl key={'spesaFutura'}>
                   <label htmlFor="spesaFutura">Spesa futura</label>
-                  <FormControl key={'spesaFutura'}>
-                    <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
-                  </FormControl>
-                </div>
-                <div className="form-row">
-                  <FormControl key={'descrizione'} validators={[Validators.mandatory]}>
-                    <label htmlFor="descrizione">Descrizione:</label>
-                    <input type="text" id="descrizione" name="descrizione"/>
-                  </FormControl>
-                </div>
-                <div className="form-row">
+                  <input type="checkbox" id="spesaFutura" name="spesaFutura"/>
+                </FormControl>
+              </div>
+              <div className="form-row">
+                <FormControl key={'descrizione'} validators={[Validators.mandatory]}>
+                  <label htmlFor="descrizione">Descrizione:</label>
+                  <input type="text" id="descrizione" name="descrizione"/>
+                </FormControl>
+              </div>
+              <div className="form-row">
+                <FormControl key={'categoria'}>
                   <label htmlFor="categoria">Categoria:</label>
-                  <FormControl key={'categoria'}>
-                    <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
-                    <datalist id="categorie"></datalist>{/*Autocomplete*/}
-                  </FormControl>
-                </div>
-                <div className="form-row">
+                  <input type="text" id="categoria" name="categoria" list="categorie"/>
+                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                </FormControl>
+              </div>
+              <div className="form-row">
+                <FormControl key={'importo'}>
                   <label htmlFor="importo">Importo:</label>
-                  <FormControl key={'importo'}>
-                    <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
-                  </FormControl>
-                </div>
-                <div className="form-row">
+                  <input type="number" id="importo" name="importo" step="0.01"/>
+                </FormControl>
+              </div>
+              <div className="form-row">
+                <FormControl key={'nota'}>
                   <label htmlFor="nota">Nota (opzionale):</label>
-                  <FormControl key={'nota'}>
-                    <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
-                  </FormControl>
-                </div>
-                <div className="button-container">
-                  <button id="elimina" type="button">Elimina</button>
-                  <button id="submitButton" type="button" onClick={()=>setRowData(data)}>Salva</button>
-                </div>
-              </Form>
-            {/*</ReactHookForm.FormProvider>*/}
+                  <textarea id="nota" name="nota" rows="4"></textarea>
+                </FormControl>
+              </div>
+              <div className="button-container">
+                <button id="elimina" type="button">Elimina</button>
+                <button id="submitButton" type="button" onClick={()=>setRowData(data)}>Salva</button>
+              </div>
+            </Form>
           </div>
         );
       }
