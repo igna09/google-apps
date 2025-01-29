@@ -365,40 +365,94 @@
       }
 
       function Form({children}) {
-        const [_formControls, _setFormControls] = React.useState([]);
+        const [_children, _setChildren] = React.useState([]);
+        const [_valid, _setValid] = React.useState(true);
+        const [_value, _setValue] = React.useState({});
+
+        const validate = (formControls) => {
+          _setValid(Object.entries(_value).reduce((acc, cur)=>acc && cur[1].valid, true));
+        }
 
         React.useEffect(() => {
-          const formControls = [];
+          let allChildrens = [];
           React.Children.forEach(children, (child) => {
-            formControls.push(...findFormControls(child));
+            allChildrens.push(addChildrenChangeFormControl(child));
           });
-          console.log(formControls)
-          _setFormControls(formControls);
+          _setChildren(allChildrens);
         }, [children]);
+        
+        React.useEffect(()=>{
+          validate();
+          console.log({_value})
+        }, [_value])
 
-        const findFormControls = (child) => {
-          const formControls = [];
+        const addChildrenChangeFormControl = (child) => {
           if (child.type === FormControl) {
-            formControls.push(child);
-          } else if (child.props && child.props.children) {
-            React.Children.forEach(child.props.children, (c) => {
-              formControls.push(...findFormControls(c));
+            console.log('pre',{child})
+            return React.cloneElement(child, {
+              value: _value[child.key],
+              onChangeFormControlValue: (value, valid) => {
+                console.log('post',{child})
+                _setValue(prevValue => {
+                  const newValue = {...prevValue, [child.key]: {value, valid}};
+                  return newValue;
+                });
+              }
             });
-          };
-          return formControls;
+          } else if (child.props && child.props.children) {
+            return React.cloneElement(child, {children: React.Children.map(child.props.children, addChildrenChangeFormControl)});
+          } else {
+            return child;
+          }
         };
 
         return (
           <form className="form-container" noValidate>
-            {children}
+            {_children}
           </form>
         )
       }
 
-      function FormControl({children, validator, onChangeFormValue}) {
+      function FormControl({children, validators, onChangeFormControlValue, value}) {
+        console.log({children, validators, onChangeFormControlValue, value})
+        const [_children, _setChildren] = React.useState([]);
+        const [_valid, _setValid] = React.useState(true);
+        const [_value, _setValue] = React.useState(value);
+
+        React.useEffect(()=>_setValue(value), [value]);
+
+        React.useEffect(() => {
+          const updatedChildren = React.Children.map(children, (child) => {
+            console.log(_value, value)
+            if (['input', 'textarea'].includes(child.type)) {
+              return React.cloneElement(child, {
+                style: {borderColor: _valid ? 'unset' : 'red'},
+                value: _value,
+                onChange: (event) => {
+                  if (child.props && child.props.onChange) { //original onChange
+                    child.props.onChange(event);
+                  }
+                  _setValue(event.target.value);
+                }
+              });
+            }
+            return child;
+          });
+          React.Children.toArray(updatedChildren).forEach(c => _setValue(c.props.value))
+          _setChildren(updatedChildren);
+        }, [children, _valid]);
+
+        React.useEffect(() => {
+          const valid = validators !== undefined ? validators.reduce((acc, cur) => acc && cur(_value), true) : true;
+          if(onChangeFormControlValue) {
+            onChangeFormControlValue(_value, valid);
+          }
+          _setValid(valid);
+        }, [_value])
+
         return (
           <React.Fragment>
-            {children}
+            {_children}
           </React.Fragment>
         )
       }
@@ -418,22 +472,17 @@
         const updateData = (key, value) => {
           setData({...data, [key]: value});
         }
-
-        //const methods = {...ReactHookForm.useForm()};
-        //const {register} = ReactHookForm.useFormContext();
         
         React.useEffect(() => {
-          //console.log({rowData, data: JSON.stringify(data), same: rowData === data});
           if(!rowData) {
             rowData = getEmptyData();
           }
           setData({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
         }, [rowData]);
 
-        /*const onSubmit = methods.handleSubmit(data => {
-          //setRowData(data)
-          console.log(data)
-        });*/
+        const Validators = {
+          mandatory: (value) => value !== undefined && value !== '',
+        };
 
         return (
           <div className="modal" id="modal">
@@ -443,38 +492,38 @@
               <Form>
                 <div className="form-row">
                   <label htmlFor="data">Data:</label>
-                  <FormControl>
+                  <FormControl key={'data'}>
                     <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
                   </FormControl>
                 </div>
                 <div className="checkbox-row">
-                  <FormControl>
+                  <label htmlFor="spesaFutura">Spesa futura</label>
+                  <FormControl key={'spesaFutura'}>
                     <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
-                    <label htmlFor="spesaFutura">Spesa futura</label>
                   </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="descrizione">Descrizione:</label>
-                  <FormControl>
-                    <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
+                  <FormControl key={'descrizione'} validators={[Validators.mandatory]}>
+                    <input type="text" id="descrizione" name="descrizione"/>
                   </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="categoria">Categoria:</label>
-                  <FormControl>
+                  <FormControl key={'categoria'}>
                     <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
                     <datalist id="categorie"></datalist>{/*Autocomplete*/}
                   </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="importo">Importo:</label>
-                  <FormControl>
+                  <FormControl key={'importo'}>
                     <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
                   </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="nota">Nota (opzionale):</label>
-                  <FormControl>
+                  <FormControl key={'nota'}>
                     <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
                   </FormControl>
                 </div>
