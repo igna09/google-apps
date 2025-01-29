@@ -214,6 +214,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <!--script src="https://www.unpkg.com/react-hook-form@7.54.2/dist/index.umd.js"></script-->
   </head>
   <div id="react-test" style="width: 100%;"></div>
   <body id="root">
@@ -273,8 +274,13 @@
       function Table({rows, columns, sortings, onRowClickCallback}) {
         const [_rows, _setRows] = React.useState([...rows]);
 
-        const onSort = (column) => {
-          const newRows = [..._rows];
+        React.useEffect(() => {
+          _setRows([...rows]);
+          onSort(columns.find(e => e.sort !== undefined && e.sort !== 'none'), rows);
+        }, [rows]);
+
+        const onSort = (column, rows) => {
+          const newRows = [...rows];
           newRows.sort((a, b) => {
             let first;
             let second;
@@ -306,7 +312,7 @@
         return (
           <table>
             <thead>
-              <Header columns={columns} sortings={sortings} onSort={onSort} />
+              <Header columns={columns} sortings={sortings} onSort={(c)=>onSort(c, _rows)} />
             </thead>
             <tbody>
               {_rows.map((e, i) => 
@@ -351,7 +357,7 @@
         }
 
         return (
-          <div className="modal-overlay" id="modal-overlay" style={{display: _overlayVisible ? 'block' : 'none'}} onClick={onClickOverlay}>
+          <div className="modal-overlay" id="modal-overlay" style={{display: _overlayVisible && children !== undefined ? 'block' : 'none'}} onClick={onClickOverlay}>
             {children ? React.cloneElement(children, {closeDialog}) : undefined}
           </div>
         );
@@ -372,6 +378,9 @@
         const updateData = (key, value) => {
           setData({...data, [key]: value});
         }
+
+        //const methods = {...ReactHookForm.useForm()};
+        //const {register} = ReactHookForm.useFormContext();
         
         React.useEffect(() => {
           //console.log({rowData, data: JSON.stringify(data), same: rowData === data});
@@ -381,40 +390,48 @@
           setData({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
         }, [rowData]);
 
+        /*const onSubmit = methods.handleSubmit(data => {
+          //setRowData(data)
+          console.log(data)
+        });*/
+
         return (
           <div className="modal" id="modal">
             <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
-            <form className="form-container" id="formDati">
-              <div className="form-row">
-                <label htmlFor="data">Data:</label>
-                <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
-              </div>
-              <div className="checkbox-row">
-                <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
-                <label htmlFor="spesaFutura">Spesa futura</label>
-              </div>
-              <div className="form-row">
-                <label htmlFor="descrizione">Descrizione:</label>
-                <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
-              </div>
-              <div className="form-row">
-                <label htmlFor="categoria">Categoria:</label>
-                <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
-                <datalist id="categorie"></datalist>{/*Autocomplete*/}
-              </div>
-              <div className="form-row">
-                <label htmlFor="importo">Importo:</label>
-                <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
-              </div>
-              <div className="form-row">
-                <label htmlFor="nota">Nota (opzionale):</label>
-                <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
-              </div>
-              <div className="button-container">
-                <button id="elimina" type="button">Elimina</button>
-                <button id="submitButton" type="button" onClick={()=>console.log(data)}>Salva</button>
-              </div>
-            </form>
+            {/*<ReactHookForm.FormProvider {...methods}>*/}
+              {/*console.log(ReactHookForm.useFormContext())*/}
+              <form className="form-container" id="formDati" noValidate>
+                <div className="form-row">
+                  <label htmlFor="data">Data:</label>
+                  <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
+                </div>
+                <div className="checkbox-row">
+                  <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
+                  <label htmlFor="spesaFutura">Spesa futura</label>
+                </div>
+                <div className="form-row">
+                  <label htmlFor="descrizione">Descrizione:</label>
+                  <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
+                </div>
+                <div className="form-row">
+                  <label htmlFor="categoria">Categoria:</label>
+                  <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
+                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                </div>
+                <div className="form-row">
+                  <label htmlFor="importo">Importo:</label>
+                  <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
+                </div>
+                <div className="form-row">
+                  <label htmlFor="nota">Nota (opzionale):</label>
+                  <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
+                </div>
+                <div className="button-container">
+                  <button id="elimina" type="button">Elimina</button>
+                  <button id="submitButton" type="button" onClick={()=>setRowData(data)}>Salva</button>
+                </div>
+              </form>
+            {/*</ReactHookForm.FormProvider>*/}
           </div>
         );
       }
@@ -432,9 +449,20 @@
       function App() {
         const [dialog, setDialog] = React.useState(undefined);
         const [_overlayVisible, _setOverlayVisible] = React.useState(false);
+        const [_spese, _setSpese] = React.useState([...spese]);
 
         const openRowDialog = (rowData, setData) => {
           setDialog(<RowDialog rowData={rowData} setRowData={setData} />);
+        }
+
+        const closeDialog = () => {
+          //_setOverlayVisible(false);
+          setDialog(undefined);
+        }
+
+        const onNewSpesa = (spesa) => {
+          closeDialog();
+          _setSpese([..._spese, spesa]);
         }
 
         //React.useEffect(() => {console.log({_overlayVisible})}, [_overlayVisible])
@@ -442,8 +470,8 @@
         return (
           <React.Fragment>
             <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
-            <Table rows={spese} columns={columns} sortings={sortings} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
-            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined, (data)=>console.log(data))}}/>
+            <Table rows={_spese} columns={columns} sortings={sortings} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
+            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined, onNewSpesa)}}/>
           </React.Fragment>
         );
       }
