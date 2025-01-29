@@ -395,7 +395,6 @@
         const [_validators, _setValidators] = React.useState({});
 
         React.useEffect(() => {
-          // console.log('data changed',{data})
           _setValue(parseDataToValue(data))
         }, [data])
 
@@ -410,12 +409,9 @@
         
         React.useEffect(()=>{
           console.log('form value changed',{_value})
-          // const valid = Object.entries(_value).reduce((acc, cur)=>acc && cur[1].valid, true);
-          // _setValid(valid);
           const valid = Object.entries(_validators).reduce((acc, [key, keyValidators]) => {
             const keyValid = keyValidators.reduce((accV, curV)=>{
               const validatorValid = curV(_value[key].value, parseValueToData(_value));
-              console.log('validatorValid', validatorValid, key, _value[key], parseValueToData(_value))
               return accV && validatorValid;
             }, true);
             return acc && keyValid
@@ -424,21 +420,17 @@
           onFormChange({valid, value: _value});
         }, [_value])
 
-        React.useEffect(()=>{
-          console.log('validators changed',_validators)
-        }, [_validators])
-
         const enrichFormControl = (child) => {
           if (child.type === FormControl) {
             if(child.props.validators) {
               _setValidators((latestValue)=>({...latestValue, [child.key]: child.props.validators}))
             }
             return React.cloneElement(child, {
+              valid: testValidators({validators: child.props.validators, value: _value[child.key].value, formValue: parseValueToData(_value)}),
               value: _value[child.key] !== undefined ? _value[child.key].value : undefined,
               onChangeFormControlValue: (value, valid) => {
                 _setValue(prevValue => {
-                  const newValue = {...prevValue, [child.key]: {value, valid: testValidators({validators: _validators[child.key], value, formValue: _value})}};
-                  // console.log('onChangeFormControlValue',newValue)
+                  const newValue = {...prevValue, [child.key]: {value, valid: testValidators({validators: _validators[child.key], value, formValue: parseValueToData(_value)})}};
                   return newValue;
                 });
               }
@@ -457,17 +449,15 @@
         )
       }
 
-      function FormControl({children, validators, onChangeFormControlValue, value}) {
+      function FormControl({children, valid, onChangeFormControlValue, value}) {
         const [_children, _setChildren] = React.useState([]);
-        const [_valid, _setValid] = React.useState(true);
         const [_value, _setValue] = React.useState(value);
 
         React.useEffect(() => {
           const updatedChildren = React.Children.map(children, (child) => {
-            // console.log(_value, myvalue)
             if (['input', 'textarea'].includes(child.type)) {
               return React.cloneElement(child, {
-                style: {borderColor: _valid ? 'unset' : 'red'},
+                style: {borderColor: valid ? 'unset' : 'red'},
                 value: !(child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
                 checked: (child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
                 onChange: (event) => {
@@ -482,7 +472,7 @@
           });
           // React.Children.toArray(updatedChildren).forEach(c => _setValue(c.props.value))
           _setChildren(updatedChildren);
-        }, [children, _valid, _value]);
+        }, [children, valid, _value]);
 
         React.useEffect(() => {
           // const valid = validators !== undefined ? validators.reduce((acc, cur) => acc && cur(_value), true) : true;
@@ -523,7 +513,6 @@
         }, [rowData]);
 
         const onFormChange = ({valid, value}) => {
-          console.log('onFormChange', valid, value)
           // setData(value);
           setValid(valid);
         }
