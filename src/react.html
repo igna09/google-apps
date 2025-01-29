@@ -217,16 +217,18 @@
   </head>
   <div id="react-test" style="width: 100%;"></div>
   <body id="root">
-    <div class="modal-overlay" id="modal-overlay"></div>
-
-    <button class="floating-button" id="float-btn">+</button>
-
     <script type="text/babel">
       Date.prototype.getTwoDigitValueString = (value) => value > 9 ? value.toString() : '0' + value;
       Date.prototype.toDateInputValue = (function() {
           var local = new Date(this);
           return local.getFullYear() + '-' + this.getTwoDigitValueString(local.getMonth() + 1) + '-' + this.getTwoDigitValueString(local.getDate());
       });
+
+      function FloatingButton({onClick}) {
+        return (
+          <button className="floating-button" id="float-btn" onClick={onClick}>+</button>
+        );
+      }
 
       function Row({rowData, index, onClickCallback, columns}) {
         let [data, setData] = React.useState(rowData);
@@ -320,15 +322,15 @@
         );
       }
 
-      function DialogOverlay({children}) {
-        const [overlayVisible, setOverlayVisible] = React.useState(false);
+      function DialogOverlay({children, overlayVisible}) {
+        const [_overlayVisible, _setOverlayVisible] = React.useState(overlayVisible);
 
         const closeDialog = () => {
-          setOverlayVisible(false);
+          _setOverlayVisible(false);
         }
 
         const openDialog = () => {
-          setOverlayVisible(true);
+          _setOverlayVisible(true);
         }
 
         React.useEffect(() => {
@@ -336,6 +338,10 @@
             openDialog();
           }
         }, [children]);
+
+        React.useEffect(() => {
+          _setOverlayVisible(overlayVisible);
+        }, [overlayVisible]);
 
         const onClickOverlay = (event) => {
           if (event.target.id === 'modal-overlay') {
@@ -345,27 +351,35 @@
         }
 
         return (
-          <div className="modal-overlay" id="modal-overlay" style={{display: overlayVisible ? 'block' : 'none'}} onClick={onClickOverlay}>
+          <div className="modal-overlay" id="modal-overlay" style={{display: _overlayVisible ? 'block' : 'none'}} onClick={onClickOverlay}>
             {children ? React.cloneElement(children, {closeDialog}) : undefined}
           </div>
         );
       }
 
       function RowDialog({rowData, setRowData, closeDialog}) {
-        const [data, setData] = React.useState({...rowData});
+        const getEmptyData = () => ({
+          data: '',
+          spesaFutura: false,
+          descrizione: '',
+          categoria: '',
+          importo: '',
+          nota: ''
+        });
 
-        const updateData = ({key, value}) => {
+        const [data, setData] = React.useState({...(rowData ? rowData : getEmptyData())});
+
+        const updateData = (key, value) => {
           setData({...data, [key]: value});
         }
         
         React.useEffect(() => {
-          // console.log({rowData, data: JSON.stringify(data), same: rowData === data});
+          //console.log({rowData, data: JSON.stringify(data), same: rowData === data});
+          if(!rowData) {
+            rowData = getEmptyData();
+          }
           setData({...rowData, data: rowData.data ? rowData.data : ''});
         }, [rowData]);
-        
-        React.useEffect(() => {
-          console.log('data changed', data)
-        }, [data]);
 
         return (
           <div className="modal" id="modal">
@@ -376,12 +390,12 @@
                 <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
               </div>
               <div className="checkbox-row">
-                <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.value)}/>
+                <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
                 <label htmlFor="spesaFutura">Spesa futura</label>
               </div>
               <div className="form-row">
                 <label htmlFor="descrizione">Descrizione:</label>
-                <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData({key: 'descrizione', value: event.target.value})}/>
+                <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
               </div>
               <div className="form-row">
                 <label htmlFor="categoria">Categoria:</label>
@@ -398,7 +412,7 @@
               </div>
               <div className="button-container">
                 <button id="elimina" type="button">Elimina</button>
-                <button id="submitButton" type="button" disabled>Salva</button>
+                <button id="submitButton" type="button" onClick={()=>console.log(data)}>Salva</button>
               </div>
             </form>
           </div>
@@ -417,13 +431,19 @@
 
       function App() {
         const [dialog, setDialog] = React.useState(undefined);
+        const [_overlayVisible, _setOverlayVisible] = React.useState(false);
+
         const openRowDialog = (rowData, setData) => {
           setDialog(<RowDialog rowData={rowData} setRowData={setData} />);
         }
+
+        //React.useEffect(() => {console.log({_overlayVisible})}, [_overlayVisible])
+        
         return (
           <React.Fragment>
-            <DialogOverlay>{dialog}</DialogOverlay>
+            <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
             <Table rows={spese} columns={columns} sortings={sortings} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
+            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined, (data)=>console.log(data))}}/>
           </React.Fragment>
         );
       }
@@ -503,60 +523,6 @@
           }
         }
         modalOverlay.style.display = 'block';
-      }*/
-
-      const closeDialog = () => {
-        modalOverlay.style.display = 'none';
-        form.reset();
-      }
-
-      const floatBtn = document.getElementById('float-btn');
-      //const modal = document.getElementById('modal');
-      const modalOverlay = document.getElementById('modal-overlay');
-      //const closeModal = document.getElementById('close-modal');
-
-      floatBtn.addEventListener('click', function() {
-          console.log('click floatBtn')
-          openDialog();
-      });
-
-      /*closeModal.addEventListener('click', function() {
-        closeDialog();
-      });*/
-
-      modalOverlay.addEventListener('click', function() {
-        if (!modal.contains(event.target)) {
-          closeDialog();
-        }
-      });
-
-      /*const form = document.getElementById('formDati');
-      const submitButton = document.getElementById('submitButton');
-      const campoData = document.getElementById('data');
-
-      // Abilita/disabilita il pulsante in base alla validità del form
-      form.addEventListener('input', () => {
-        submitButton.disabled = !form.checkValidity();
-      });
-
-      function gestisciData() {
-        const spesaFutura = document.getElementById('spesaFutura').checked;
-        
-        if (spesaFutura) {
-          // Disabilita il campo data e rimuove l'obbligatorietà
-          campoData.disabled = true;
-          campoData.removeAttribute('required');
-          
-          // Resetta il valore del campo data
-          campoData.value = '';
-        } else {
-          // Abilita il campo data e lo rende obbligatorio
-          campoData.disabled = false;
-          campoData.setAttribute('required', 'true');
-        }
-
-        // Controlla di nuovo la validità del form
-        form.dispatchEvent(new Event('input'));
       }*/
 
       function aggiungiSpesa() {
