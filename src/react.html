@@ -364,6 +364,45 @@
         );
       }
 
+      function Form({children}) {
+        const [_formControls, _setFormControls] = React.useState([]);
+
+        React.useEffect(() => {
+          const formControls = [];
+          React.Children.forEach(children, (child) => {
+            formControls.push(...findFormControls(child));
+          });
+          console.log(formControls)
+          _setFormControls(formControls);
+        }, [children]);
+
+        const findFormControls = (child) => {
+          const formControls = [];
+          if (child.type === FormControl) {
+            formControls.push(child);
+          } else if (child.props && child.props.children) {
+            React.Children.forEach(child.props.children, (c) => {
+              formControls.push(...findFormControls(c));
+            });
+          };
+          return formControls;
+        };
+
+        return (
+          <form className="form-container" noValidate>
+            {children}
+          </form>
+        )
+      }
+
+      function FormControl({children, validator, onChangeFormValue}) {
+        return (
+          <React.Fragment>
+            {children}
+          </React.Fragment>
+        )
+      }
+
       function RowDialog({rowData, setRowData, closeDialog}) {
         const getEmptyData = () => ({
           data: '',
@@ -401,37 +440,49 @@
             <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
             {/*<ReactHookForm.FormProvider {...methods}>*/}
               {/*console.log(ReactHookForm.useFormContext())*/}
-              <form className="form-container" id="formDati" noValidate>
+              <Form>
                 <div className="form-row">
                   <label htmlFor="data">Data:</label>
-                  <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
+                  <FormControl>
+                    <input type="date" id="data" name="data" required value={data.data} onChange={(event)=>updateData('data', event.target.value)}/>
+                  </FormControl>
                 </div>
                 <div className="checkbox-row">
-                  <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
-                  <label htmlFor="spesaFutura">Spesa futura</label>
+                  <FormControl>
+                    <input type="checkbox" id="spesaFutura" name="spesaFutura" checked={data.spesaFutura} onChange={(event)=>updateData('spesaFutura', event.target.checked)}/>
+                    <label htmlFor="spesaFutura">Spesa futura</label>
+                  </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="descrizione">Descrizione:</label>
-                  <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
+                  <FormControl>
+                    <input type="text" id="descrizione" name="descrizione" required value={data.descrizione} onChange={(event)=>updateData('descrizione', event.target.value)}/>
+                  </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="categoria">Categoria:</label>
-                  <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
-                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                  <FormControl>
+                    <input type="text" id="categoria" name="categoria" list="categorie" required value={data.categoria} onChange={(event)=>updateData('categoria', event.target.value)}/>
+                    <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                  </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="importo">Importo:</label>
-                  <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
+                  <FormControl>
+                    <input type="number" id="importo" name="importo" step="0.01" required  value={data.importo} onChange={(event)=>updateData('importo', event.target.value)}/>
+                  </FormControl>
                 </div>
                 <div className="form-row">
                   <label htmlFor="nota">Nota (opzionale):</label>
-                  <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
+                  <FormControl>
+                    <textarea id="nota" name="nota" rows="4" value={data.nota} onChange={(event)=>updateData('nota', event.target.value)}></textarea>
+                  </FormControl>
                 </div>
                 <div className="button-container">
                   <button id="elimina" type="button">Elimina</button>
                   <button id="submitButton" type="button" onClick={()=>setRowData(data)}>Salva</button>
                 </div>
-              </form>
+              </Form>
             {/*</ReactHookForm.FormProvider>*/}
           </div>
         );
