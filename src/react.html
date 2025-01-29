@@ -378,7 +378,7 @@
           if(!rowData) {
             rowData = getEmptyData();
           }
-          setData({...rowData, data: rowData.data ? rowData.data : ''});
+          setData({...rowData, data: rowData.data ? rowData.data : '', spesaFutura: rowData.data === undefined});
         }, [rowData]);
 
         return (
