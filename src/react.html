@@ -364,6 +364,14 @@
         );
       }
 
+      /**
+        Function: Form
+        Description: A React functional component that renders a form.
+        Props:
+          - children: The child elements to be rendered inside the form.
+          - data: The data object used to populate the form fields.
+          - onFormChange: Callback function to handle form changes.
+      */
       function Form({children, data, onFormChange}) {
         const testValidators = ({validators, value, formValue}) => {
           if(!validators) {
@@ -398,6 +406,29 @@
           onFormChange({valid, value: _value});
         }, [_value])
 
+        /**
+          Function: enrichFormControl
+
+          Description:
+          This function takes a React child component and enriches it with additional properties and behaviors if it is a FormControl component. 
+          It handles validation and value management for the FormControl component.
+
+          Parameters:
+          - child (ReactElement): The child component to be enriched.
+
+          Returns:
+          - ReactElement: The enriched child component with additional properties and behaviors.
+
+          Behavior:
+          - If the child component is of type FormControl:
+            - If the child has validators, it updates the validators state.
+            - It clones the child component and adds the following properties:
+              - valid: A boolean indicating if the current value passes the validators.
+              - value: The current value of the form control.
+              - onChangeFormControlValue: A function to update the form control value.
+          - If the child component has children, it recursively enriches the children.
+          - If the child component is neither a FormControl nor has children, it returns the child as is.
+        */
         const enrichFormControl = (child) => {
           if (child.type === FormControl) {
             if(child.props.validators) {
@@ -407,7 +438,6 @@
               valid: testValidators({validators: child.props.validators, value: _value[child.key], formValue: _value}),
               value: _value[child.key] !== undefined ? _value[child.key] : undefined,
               onChangeFormControlValue: (value) => {
-                //_setValidities((prevValue)=>({...prevValue, [child.key]: testValidators({validators: _validators[child.key], value, formValue: _value})}))
                 _setValue(prevValue => {
                   const newValue = {...prevValue, [child.key]: value};
                   return newValue;
@@ -428,10 +458,34 @@
         )
       }
 
+      /**
+        Function: FormControl
+        Description: A React functional component that renders a form control element.
+        Props:
+          - children: The child elements to be rendered within the form control.
+          - valid: A boolean indicating whether the form control value is valid.
+          - onChangeFormControlValue: A callback function to handle changes to the form control value.
+          - value: The current value of the form control.
+      */
       function FormControl({children, valid, onChangeFormControlValue, value}) {
         const [_children, _setChildren] = React.useState([]);
         const [_value, _setValue] = React.useState(value);
 
+        /**
+          This React useEffect hook updates the children elements of a component based on certain conditions.
+          - It maps over the children elements and checks if the element type is 'input' or 'textarea'.
+          - If the element is an 'input' or 'textarea', it clones the element with additional props:
+            - `style`: Sets the border color to 'unset' if valid, otherwise 'red'.
+            - `value`: Sets the value if the element is not a checkbox input.
+            - `checked`: Sets the checked state if the element is a checkbox input.
+            - `onChange`: A custom onChange handler that:
+              - Calls the original onChange handler if it exists.
+              - Updates the value or checked state based on the input type.
+              - Calls `_setValue` to update the state.
+              - Calls `onChangeFormControlValue` if it exists.
+          - The updated children elements are then set using `_setChildren`.
+          - The hook depends on `children`, `valid`, and `_value` to re-run.
+        */
         React.useEffect(() => {
           const updatedChildren = React.Children.map(children, (child) => {
             if (['input', 'textarea'].includes(child.type)) {
