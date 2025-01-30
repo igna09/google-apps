@@ -489,10 +489,28 @@
         React.useEffect(() => {
           const updatedChildren = React.Children.map(children, (child) => {
             if (['input', 'textarea'].includes(child.type)) {
+              const style = {};
+              style.borderColor = valid ? 'unset' : 'red';
+              if(!valid) {
+                style.outline = '1px solid red';
+              }
               return React.cloneElement(child, {
-                style: {borderColor: valid ? 'unset' : 'red'},
+                style,
                 value: !(child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
                 checked: (child.type === 'input' && child.props.type === 'checkbox') ? _value : undefined,
+                onFocus: (event) => {
+                  console.log('onFocusVisible')
+                  if(!valid) {
+                    event.target.style.outline = '1px solid red';
+                  } else {
+                    event.target.style.outline = '-webkit-focus-ring-color auto 1px;';
+                  }
+                },
+                onBlur: (event) => {
+                  if(!valid) {
+                    event.target.style.outline = 'unset';
+                  }
+                },
                 onChange: (event) => {
                   if (child.props && child.props.onChange) { //original onChange
                     child.props.onChange(event);
