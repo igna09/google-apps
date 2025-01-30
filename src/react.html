@@ -609,7 +609,7 @@
                 </FormControl>
               </div>
               <div className="button-container" key={'button-row'}>
-                <button id="elimina" type="button">Elimina</button>
+                {rowData !== undefined ? <button id="elimina" type="button">Elimina</button>: ''}
                 <button id="submitButton" type="button" disabled={!valid} onClick={()=>setRowData(data)}>Salva</button>
               </div>
             </Form>
