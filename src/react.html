@@ -231,11 +231,10 @@
         );
       }
 
-      function Row({rowData, index, onClickCallback, columns}) {
-        let [data, setData] = React.useState(rowData);
+      function Row({rowData, index, onClick, columns}) {
         return (
-          <tr onClick={() => onClickCallback({data, index, setData})}>
-            {columns.map((e, i) => <td key={i}>{data[e.property]}{e.type === 'currency' ? '€' : ''}</td>)}
+          <tr onClick={() => onClick({data: rowData, index})}>
+            {columns.map((e, i) => <td key={i}>{rowData[e.property]}{e.type === 'currency' ? '€' : ''}</td>)}
           </tr>
         );
       }
@@ -271,7 +270,7 @@
         );
       }
 
-      function Table({rows, columns, sortings, onRowClickCallback}) {
+      function Table({rows, columns, sortings, onClick}) {
         const [_rows, _setRows] = React.useState([...rows]);
 
         React.useEffect(() => {
@@ -321,7 +320,7 @@
                   key={[e.data, e.descrizione, e.categoria, e.importo, e.nota].join('_')}
                   index={i}
                   rowData={e}
-                  onClickCallback={onRowClickCallback}
+                  onClick={onClick}
                   columns={columns} />
               )}
             </tbody>
@@ -359,7 +358,10 @@
 
         return (
           <div className="modal-overlay" id="modal-overlay" style={{display: _overlayVisible && children !== undefined ? 'block' : 'none'}} onClick={onClickOverlay}>
-            {children ? React.cloneElement(children, {closeDialog}) : undefined}
+            <div className="modal" id="modal">
+              <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
+              {children ? React.cloneElement(children, {closeDialog}) : undefined}
+            </div>
           </div>
         );
       }
@@ -387,7 +389,7 @@
         }
 
         const [_children, _setChildren] = React.useState([]);
-        const [_valid, _setValid] = React.useState(true);
+        const [_valid, _setValid] = React.useState(false);
         const [_value, _setValue] = React.useState(data);
         const [_validators, _setValidators] = React.useState({});
 
@@ -548,7 +550,7 @@
         )
       }
 
-      function RowDialog({rowData, setRowData, closeDialog}) {
+      function RowDialog({rowData, onSave, onDelete}) {
         const getEmptyData = () => ({
           data: '',
           spesaFutura: false,
@@ -580,59 +582,57 @@
         };
 
         return (
-          <div className="modal" id="modal">
-            <button className="close-button" id="close-modal" onClick={closeDialog}>&times;</button>
-            <Form data={initialFormData} onFormChange={onFormChange}>
-              <div className="form-row" key={'data-row'}>
-                <FormControl key={'data'} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.spesaFutura))]}>
-                  <label htmlFor="data">Data:</label>
-                  <input disabled={disableData} type="date" id="data" name="data"/>
-                </FormControl>
-              </div>
-              <div className="checkbox-row" key={'spesaFutura-row'}>
-                <FormControl key={'spesaFutura'} onChange={(selected, patchFormValue)=>{
-                  setDisableData(selected);
-                  patchFormValue({data: ''});
-                  //setInitialFormData({...initialFormData, data: ''})
-                }} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.data))]}>
-                  <label htmlFor="spesaFutura">Spesa futura</label>
-                  <input type="checkbox" id="spesaFutura" name="spesaFutura"/>
-                </FormControl>
-              </div>
-              <div className="form-row" key={'descrizione-row'}>
-                <FormControl key={'descrizione'} validators={[Validators.mandatory]}>
-                  <label htmlFor="descrizione">Descrizione:</label>
-                  <input type="text" id="descrizione" name="descrizione"/>
-                </FormControl>
-              </div>
-              <div className="form-row" key={'categoria-row'}>
-                <FormControl key={'categoria'} validators={[Validators.mandatory]}>
-                  <label htmlFor="categoria">Categoria:</label>
-                  <input type="text" id="categoria" name="categoria" list="categorie"/>
-                  <datalist id="categorie"></datalist>{/*Autocomplete*/}
-                </FormControl>
-              </div>
-              <div className="form-row" key={'importo-row'}>
-                <FormControl key={'importo'} validators={[Validators.mandatory]}>
-                  <label htmlFor="importo">Importo:</label>
-                  <input type="number" id="importo" name="importo" step="0.01"/>
-                </FormControl>
-              </div>
-              <div className="form-row" key={'ntoa-row'}>
-                <FormControl key={'nota'}>
-                  <label htmlFor="nota">Nota (opzionale):</label>
-                  <textarea id="nota" name="nota" rows="4"></textarea>
-                </FormControl>
-              </div>
-              <div className="button-container" key={'button-row'}>
-                {rowData !== undefined ? <button id="elimina" type="button">Elimina</button>: ''}
-                <button id="submitButton" type="button" disabled={!formValid} onClick={()=>{
-                  setRowData(formData);
-                  closeDialog();
-                }}>Salva</button>
-              </div>
-            </Form>
-          </div>
+          <Form data={initialFormData} onFormChange={onFormChange}>
+            <div className="form-row" key={'data-row'}>
+              <FormControl key={'data'} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.spesaFutura))]}>
+                <label htmlFor="data">Data:</label>
+                <input disabled={disableData} type="date" id="data" name="data"/>
+              </FormControl>
+            </div>
+            <div className="checkbox-row" key={'spesaFutura-row'}>
+              <FormControl key={'spesaFutura'} onChange={(selected, patchFormValue)=>{
+                setDisableData(selected);
+                patchFormValue({data: ''});
+                //setInitialFormData({...initialFormData, data: ''})
+              }} validators={[(value, formValue) => (Validators.mandatory(value) ||  Validators.mandatory(formValue.data))]}>
+                <label htmlFor="spesaFutura">Spesa futura</label>
+                <input type="checkbox" id="spesaFutura" name="spesaFutura"/>
+              </FormControl>
+            </div>
+            <div className="form-row" key={'descrizione-row'}>
+              <FormControl key={'descrizione'} validators={[Validators.mandatory]}>
+                <label htmlFor="descrizione">Descrizione:</label>
+                <input type="text" id="descrizione" name="descrizione"/>
+              </FormControl>
+            </div>
+            <div className="form-row" key={'categoria-row'}>
+              <FormControl key={'categoria'} validators={[Validators.mandatory]}>
+                <label htmlFor="categoria">Categoria:</label>
+                <input type="text" id="categoria" name="categoria" list="categorie"/>
+                <datalist id="categorie"></datalist>{/*Autocomplete*/}
+              </FormControl>
+            </div>
+            <div className="form-row" key={'importo-row'}>
+              <FormControl key={'importo'} validators={[Validators.mandatory]}>
+                <label htmlFor="importo">Importo:</label>
+                <input type="number" id="importo" name="importo" step="0.01"/>
+              </FormControl>
+            </div>
+            <div className="form-row" key={'ntoa-row'}>
+              <FormControl key={'nota'}>
+                <label htmlFor="nota">Nota (opzionale):</label>
+                <textarea id="nota" name="nota" rows="4"></textarea>
+              </FormControl>
+            </div>
+            <div className="button-container" key={'button-row'}>
+              {rowData !== undefined ? <button id="elimina" type="button" onClick={()=>{
+                onDelete();
+              }}>Elimina</button>: ''}
+              <button id="submitButton" type="button" disabled={!formValid} onClick={()=>{
+                onSave(formData);
+              }}>Salva</button>
+            </div>
+          </Form>
         );
       }
 
@@ -651,8 +651,33 @@
         const [_overlayVisible, _setOverlayVisible] = React.useState(false);
         const [_spese, _setSpese] = React.useState([...spese]);
 
-        const openRowDialog = (rowData, setData) => {
-          setDialog(<RowDialog rowData={rowData} setRowData={setData} />);
+        const openRowDialog = (rowData, index) => {
+          setDialog(
+            rowData !== undefined ?
+            <RowDialog
+              rowData={rowData}
+              onSave={(rowData)=>{
+                const newSpese = [..._spese];
+                newSpese[index] = rowData;
+                _setSpese(newSpese);
+                closeDialog();
+              }}
+              onDelete={()=>{
+                const newSpese = [..._spese];
+                newSpese.splice(index, 1);
+                _setSpese(newSpese);
+                closeDialog();
+              }}
+            /> :
+            <RowDialog
+              rowData={rowData}
+              onSave={(rowData)=>{
+                const newSpese = [..._spese, rowData];
+                _setSpese(newSpese);
+                closeDialog();
+              }}
+            />
+          );
         }
 
         const closeDialog = () => {
@@ -670,8 +695,8 @@
         return (
           <React.Fragment>
             <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
-            <Table rows={_spese} columns={columns} sortings={sortings} onRowClickCallback={({data, index, setData}) => openRowDialog(data, setData)}/>
-            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined, onNewSpesa)}}/>
+            <Table rows={_spese} columns={columns} sortings={sortings} onClick={({data, index}) => openRowDialog(data, index)}/>
+            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined)}}/>
           </React.Fragment>
         );
       }
