@@ -685,12 +685,11 @@
           setDialog(undefined);
         }
 
-        const onNewSpesa = (spesa) => {
-          closeDialog();
-          _setSpese([..._spese, spesa]);
-        }
-
-        //React.useEffect(() => {console.log({_overlayVisible})}, [_overlayVisible])
+        React.useEffect(() => {
+          console.log('spese changed', _spese)
+          //updateCategorie(table.apis.getData());
+          //saveOnGoogle();
+        }, [_spese]);
         
         return (
           <React.Fragment>
@@ -702,7 +701,6 @@
       }
 
       let spese = [];
-      let categorie = [];
 
       // Mostra i dati dal foglio di calcolo nel form
       window.onload = function() {
@@ -731,76 +729,6 @@
           option.value = categoria;
           categorieDatalist.appendChild(option);
         });
-      }
-
-      const buttonContainer = document.getElementsByClassName('button-container')[0];
-      /*const salvaButton = buttonContainer.querySelector('#submitButton');
-      const eliminaButton = buttonContainer.querySelector('#elimina');
-
-      eliminaButton.onclick = () => {
-        table.apis.removeRow(aggiornaDatiRow.data.index);
-        updateCategorie(table.apis.getData());
-        closeDialog();
-        aggiornaDatiRow = undefined;
-        saveOnGoogle();
-      }
-
-      salvaButton.onclick = aggiungiSpesa;
-
-      let aggiornaDatiRow = undefined;
-      const openDialog = (rowData, setData) => {
-        if(rowData) {
-          aggiornaDatiRow = rowData;
-          if(rowData.data) {
-            document.getElementById('data').value = rowData.data;
-            document.getElementById('spesaFutura').checked = false;
-          } else {
-            document.getElementById('spesaFutura').checked = true;
-          }
-          document.getElementById('descrizione').value = rowData.descrizione;
-          document.getElementById('categoria').value = rowData.categoria;
-          document.getElementById('importo').value = rowData.importo;
-          document.getElementById('nota').value = rowData.nota;
-
-          eliminaButton.style.display = 'block';
-          salvaButton.onclick = () => {
-            aggiungiSpesa();
-            setData({...aggiornaDatiRow});
-            aggiornaDatiRow = undefined;
-          }
-        } else {
-          eliminaButton.style.display = 'none';
-          salvaButton.onclick = () => {
-            aggiungiSpesa();
-            aggiornaDatiRow = undefined;
-          }
-        }
-        modalOverlay.style.display = 'block';
-      }*/
-
-      function aggiungiSpesa() {
-        if(aggiornaDatiRow !== undefined) {
-          aggiornaDatiRow.data= !document.getElementById('spesaFutura').checked ? new Date(document.getElementById('data').value).toDateInputValue() : undefined,
-          aggiornaDatiRow.descrizione = document.getElementById('descrizione').value,
-          aggiornaDatiRow.categoria = document.getElementById('categoria').value,
-          aggiornaDatiRow.importo = parseFloat(document.getElementById('importo').value),
-          aggiornaDatiRow.nota = document.getElementById('nota').value || '' // Nota opzionale, usa stringa vuota se assente
-
-          //aggiornaDatiRow = undefined;
-        } else {
-          const dati = {
-            data: !document.getElementById('spesaFutura').checked ? new Date(document.getElementById('data').value).toDateInputValue() : undefined,
-            // spesaFutura: document.getElementById('spesaFutura').checked,
-            descrizione: document.getElementById('descrizione').value,
-            categoria: document.getElementById('categoria').value,
-            importo: parseFloat(document.getElementById('importo').value),
-            nota: document.getElementById('nota').value || '' // Nota opzionale, usa stringa vuota se assente
-          };
-          //table.apis.addRows([dati]);
-        }
-        closeDialog();
-        //updateCategorie(table.apis.getData());
-        //saveOnGoogle();
       }
 
       function sortSpese(spese) {
