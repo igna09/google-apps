@@ -231,6 +231,36 @@
         );
       }
 
+      const sortArrayFromProperty = ({rows, property, direction}) => {
+        let newRows = [...rows];
+          newRows.sort((a, b) => {
+          let first;
+          let second;
+
+          if(direction === 'asc') {
+            first = a[property];
+            second = b[property];
+          } else if(direction === 'desc') {
+            first = b[property];
+            second = a[property];
+          }
+
+          // Se a o b sono undefined, mettili alla fine
+          if (first === undefined || first === '') return 1;
+          if (second === undefined || second === '') return -1;
+          
+          // Altrimenti confronta le date
+          if(first < second) {
+            return -1;
+          } else if(first > second) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+        return newRows;
+      }
+
       function Row({rowData, index, onClick, columns}) {
         return (
           <tr onClick={() => onClick({data: rowData, index})}>
@@ -270,7 +300,7 @@
         );
       }
 
-      function Table({rows, columns, sortings, onClick}) {
+      function Table({rows, columns, sortings, onClick, onSortCallback}) {
         const [_rows, _setRows] = React.useState([...rows]);
 
         React.useEffect(() => {
@@ -280,33 +310,10 @@
         const onSort = (column, rows) => {
           let newRows = [...rows];
           newRows = newRows.map(e => ({...e, data: e.data ? new Date(e.data) : undefined}));
-          newRows.sort((a, b) => {
-            let first;
-            let second;
-
-            if(column.sort === 'asc') {
-              first = a[column.property];
-              second = b[column.property];
-            } else if(column.sort === 'desc') {
-              first = b[column.property];
-              second = a[column.property];
-            }
-
-            // Se a o b sono undefined, mettili alla fine
-            if (first === undefined || first === '') return 1;
-            if (second === undefined || second === '') return -1;
-            
-            // Altrimenti confronta le date
-            if(first < second) {
-              return -1;
-            } else if(first > second) {
-              return 1;
-            } else {
-              return 0;
-            }
-          });
+          newRows = sortArrayFromProperty({rows: newRows, property: column.property, direction: column.sort});
           newRows = newRows.map(e => ({...e, data: e.data ? e.data.toDateInputValue() : undefined}));
           _setRows(newRows);
+          onSortCallback(newRows);
         };
 
         return (
@@ -660,6 +667,7 @@
         const [dialog, setDialog] = React.useState(undefined);
         const [_overlayVisible, _setOverlayVisible] = React.useState(false);
         const [_spese, _setSpese] = React.useState([...spese]);
+        const [_sortedSpese, _setSortedSpese] = React.useState([]);
 
         const openRowDialog = (rowData, index) => {
           setDialog(
@@ -673,7 +681,7 @@
                 closeDialog();
               }}
               onDelete={()=>{
-                const newSpese = [..._spese];
+                const newSpese = [..._sortedSpese];
                 newSpese.splice(index, 1);
                 _setSpese(newSpese);
                 closeDialog();
@@ -697,14 +705,16 @@
 
         React.useEffect(() => {
           console.log('spese changed', _spese)
-          //saveOnGoogle();
+          //saveOnGoogle(_spese);
         }, [_spese]);
+
+        const onSortCallback = (rows) => {_setSortedSpese(rows)}
         
         return (
           <React.Fragment>
             <SpeseContext.Provider value={_spese}>
               <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
-              <Table rows={_spese} columns={columns} sortings={sortings} onClick={({data, index}) => openRowDialog(data, index)}/>
+              <Table rows={_spese} columns={columns} sortings={sortings} onClick={({data, rows, index}) => openRowDialog(data, index)} onSortCallback={onSortCallback}/>
               <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined)}}/>
             </SpeseContext.Provider>
           </React.Fragment>
@@ -761,9 +771,9 @@
         return newSpese;
       }
 
-      function saveOnGoogle() {
+      function saveOnGoogle(spese) {
         //console.log(sortSpese(table.apis.getData().map(e => ({...e, data: e.data ? e.data : undefined}))))
-        google.script.run.aggiornaSpese(sortSpese(table.apis.getData().map(e => ({...e, data: e.data ? e.data : undefined}))));
+        google.script.run.aggiornaSpese(sortSpese(spese.map(e => ({...e, data: e.data ? e.data : undefined, importo: e.importo.toString().replace('.',',')}))));
       }
     </script>
   </body>
