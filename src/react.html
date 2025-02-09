@@ -565,6 +565,9 @@
         const [formValid, setFormValid] = React.useState(false);
         const [disableData, setDisableData] = React.useState(false);
 
+        const spese = React.useContext(SpeseContext);
+        const categorie = Array.from(new Set(spese.map(s => s.categoria)))
+
         React.useEffect(() => {
           if(!rowData) {
             rowData = getEmptyData();
@@ -609,7 +612,12 @@
               <FormControl key={'categoria'} validators={[Validators.mandatory]}>
                 <label htmlFor="categoria">Categoria:</label>
                 <input type="text" id="categoria" name="categoria" list="categorie"/>
-                <datalist id="categorie"></datalist>{/*Autocomplete*/}
+                <datalist id="categorie">
+                  {
+                    categorie
+                    .map((c, i) => <option value={c} key={i}></option>)
+                  }
+                </datalist>
               </FormControl>
             </div>
             <div className="form-row" key={'importo-row'}>
@@ -645,6 +653,8 @@
       ];
 
       const sortings = [{id: 'none', symbol: '⇅', usable: false},{id: 'asc', symbol: '↑', usable: true},{id: 'desc', symbol: '↓', usable: true}];
+
+      const SpeseContext = React.createContext([]);
 
       function App() {
         const [dialog, setDialog] = React.useState(undefined);
@@ -687,15 +697,16 @@
 
         React.useEffect(() => {
           console.log('spese changed', _spese)
-          //updateCategorie(table.apis.getData());
           //saveOnGoogle();
         }, [_spese]);
         
         return (
           <React.Fragment>
-            <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
-            <Table rows={_spese} columns={columns} sortings={sortings} onClick={({data, index}) => openRowDialog(data, index)}/>
-            <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined)}}/>
+            <SpeseContext.Provider value={_spese}>
+              <DialogOverlay overlayVisible={_overlayVisible}>{dialog}</DialogOverlay>
+              <Table rows={_spese} columns={columns} sortings={sortings} onClick={({data, index}) => openRowDialog(data, index)}/>
+              <FloatingButton onClick={(event)=>{/*_setOverlayVisible(true)*/openRowDialog(undefined)}}/>
+            </SpeseContext.Provider>
           </React.Fragment>
         );
       }
